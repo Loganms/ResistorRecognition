@@ -1,10 +1,10 @@
 INPUT_FOLDER = 'ComplexImages/';
-MIN_HORIZ_LENGTH = 1200;
-MAX_HORIZ_LENGTH = 2000;
+MIN_HORIZ_LENGTH = 1300;
+MAX_HORIZ_LENGTH = 1900;
 BASE_HORIZ_LENGTH = 1600;
 
-MIN_ASPECT_RATIO = 2.3;
-MAX_ASPECR_RATIO = 3.4;
+MIN_ASPECT_RATIO = 2.1;
+MAX_ASPECT_RATIO = 4.2;
 
 % READ IMAGE
 im = imread([INPUT_FOLDER, 'c1.jpg']);
@@ -19,30 +19,51 @@ end
 
 % RESIZE
 if (im_cols < MIN_HORIZ_LENGTH || im_cols > MAX_HORIZ_LENGTH)
-   ratio = BASE_HORIZ_LENGTH / im_cols;
+   ratio = double(BASE_HORIZ_LENGTH) / double(im_cols);
    im = imresize(im, ratio);
 end
 
 % THRESHOLD
-normal = rgb2normalizedrgb(im);
+% normal = rgb2normalizedrgb(im);
+% red_layer = normal(:,:,1);
+% mask = red_layer > 165;
+normal = rgb2hsv(im);
 red_layer = normal(:,:,1);
-mask = red_layer > 175;
+mask = red_layer > 0 & red_layer < .11;
+
+figure(1)
+imshow(mask);
 
 % MEDIAN FILTER
-filtered = medfilt2(mask);
+filtered = medfilt2(mask, [9,9]);
 
 % CLOSE Y GAPS
-strel_opener = strel('recangle', [17,3]);
+strel_opener = strel('rectangle', [19,3]);
 closed_image = imclose(filtered, strel_opener);
 
+figure(2)
+imshow(closed_image)
+
+
+
 % OPEN X GAPS
-strel_closer = strel('rectangle', [12,8]);
+strel_closer = strel('rectangle', [1,14]);
 opened_image = imopen(closed_image, strel_closer);
+
+figure(3)
+imshow(opened_image);
+
+% CLOSE Y GAPS AGAIN
+strel_opener = strel('rectangle', [25,5]);
+closed_image_again = imclose(opened_image, strel_opener);
+
+figure(4)
+imshow(closed_image_again)
 
 % FIND ALL POSSIBLE RESISTORS
     
     % Get all interesting regions
-center = regionprops(opened_image, 'centroid', 'BoundingBox');
+center = regionprops(closed_image_again, 'centroid', 'BoundingBox');
 
     % Eliminate regions with invalid aspect ratio
 r_suspects = double(zeros(1,4));
@@ -56,17 +77,26 @@ for i = 1 : length(center)
 end
 r_suspects = r_suspects(2:end, :);
 
+figure(7)
+hold on;
+imshow(im)
+for i = 1 : size(r_suspects, 1)
+    box = r_suspects(i, :);
+    rectangle('position', [box(1),box(2),box(3),box(4)], 'EdgeColor','m','linewidth',3);
+end
+hold off;
+
     % Eliminate regions with invalid background color
 hsv_image = rgb2hsv(im);
 hue = hsv_image(:,:,1);
 r_perpetrators = double(zeros(1,4));
 
-for i = 1 : length(r_suspects)
+for i = 1 : size(r_suspects, 1)
     box = r_suspects(i, :);
-    hist = histogram(hue(box(2):(box(2) + box(4)), box(1):(box(1)+box(3))), 5);
-    bins = hist.BinCounts;
-    maxBin = max(bins(:));
-    index = find(bins == maxBin);
+    %hist = histogram(hue(box(2):(box(2) + box(4)), box(1):(box(1)+box(3))), 5);
+    hist = histcounts(hue(box(2):(box(2) + box(4)), box(1):(box(1)+box(3))), 5);
+    maxIndex = max(hist(:));
+    index = find(hist == maxIndex);
     if (index == 1)
         r_perpetrators = [r_perpetrators; box];
     end
@@ -77,15 +107,11 @@ r_perpetrators = r_perpetrators(2:end, :);
 figure(8)
 hold on;
 imshow(im)
-for i = 1 : length(r_perpetrators)
+for i = 1 : size(r_perpetrators, 1)
     box = r_perpetrators(i, :);
     rectangle('position', [box(1),box(2),box(3),box(4)], 'EdgeColor','m','linewidth',3);
 end
 hold off;
-
-% FIND HORIZONTAL/VERTICAL
-
-% REGION PROPS
 
 % STRIPE TEST
 
