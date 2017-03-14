@@ -1,5 +1,5 @@
 function [ norm ] = rgb2nrgb( im )
-%RGB2NRGB converts an rgb image to normalized rgb
+%RGB2NRGB converts an rgb image to normalized rgb [0,1]
 
 R = double(im(:,:,1));
 G = double(im(:,:,2));
