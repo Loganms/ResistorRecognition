@@ -1,4 +1,6 @@
 INPUT_FOLDER = 'ComplexImages/';
+SAVE_FOLDER = 'ComplexImages/FinalProcessingPipeline/';
+
 MIN_HORIZ_LENGTH = 1300;
 MAX_HORIZ_LENGTH = 1900;
 BASE_HORIZ_LENGTH = 1600;
@@ -8,8 +10,11 @@ MAX_ASPECT_RATIO = 4.2;
 
 HUE_EDGES = 0:0.2:1;
 
+TEST_IMAGE_NUMBER = 5;
+TEST_IMAGE_LOCATION = [INPUT_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '.jpg'];
+
 % READ IMAGE
-im = imread([INPUT_FOLDER, 'c4.jpg']);
+im = imread(TEST_IMAGE_LOCATION);
 
 % MAKE HORIZONTAL DOMINANT DIMENSION
 [im_rows, im_cols] = size (im(:,:,1));
@@ -58,6 +63,17 @@ imshow(opened_image);
     % Get all interesting regions
 center = regionprops(opened_image, 'centroid', 'BoundingBox');
 
+    % Show what we start with, before narrowing down
+figure(4)
+hold on;
+imshow(im)
+for i = 1: length(center)
+    box = center(i).BoundingBox;
+    rectangle('position', [box(1),box(2),box(3),box(4)], 'EdgeColor','m','linewidth',3);
+end
+saveas(gcf, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_4witnesses.png']);
+hold off;
+
     % Eliminate regions with invalid aspect ratio
 r_suspects = double(zeros(1,4));
 for i = 1 : length(center)
@@ -77,6 +93,7 @@ for i = 1 : size(r_suspects, 1)
     box = r_suspects(i, :);
     rectangle('position', [box(1),box(2),box(3),box(4)], 'EdgeColor','m','linewidth',3);
 end
+saveas(gcf, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_5suspects.png']);
 hold off;
 
     % Eliminate regions with invalid background color
@@ -103,6 +120,7 @@ for i = 1 : size(r_perpetrators, 1)
     box = r_perpetrators(i, :);
     rectangle('position', [box(1),box(2),box(3),box(4)], 'EdgeColor','m','linewidth',3);
 end
+saveas(gcf, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_6perpetrators.png']);
 hold off;
 
 % STRIPE TEST
@@ -114,3 +132,7 @@ hold off;
 % DRAW BOUNDING BOXES
 
 % RETURN RESULT
+
+imwrite(mask, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_1threshed.png']);
+imwrite(closed_image, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_2closed.png']);
+imwrite(opened_image, [SAVE_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '_3opened.png']);
