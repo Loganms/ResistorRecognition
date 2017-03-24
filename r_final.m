@@ -5,12 +5,12 @@ MIN_HORIZ_LENGTH = 1300;
 MAX_HORIZ_LENGTH = 1900;
 BASE_HORIZ_LENGTH = 1600;
 
-MIN_ASPECT_RATIO = 2.1;
+MIN_ASPECT_RATIO = 2.0;
 MAX_ASPECT_RATIO = 4.2;
 
 HUE_EDGES = 0:0.2:1;
 
-TEST_IMAGE_NUMBER = 5;
+TEST_IMAGE_NUMBER = 3;
 TEST_IMAGE_LOCATION = [INPUT_FOLDER, 'c', num2str(TEST_IMAGE_NUMBER), '.jpg'];
 
 % READ IMAGE
@@ -30,13 +30,15 @@ if (im_cols < MIN_HORIZ_LENGTH || im_cols > MAX_HORIZ_LENGTH)
    im = imresize(im, ratio);
 end
 
+  %                      im = imrotate(im, -90);
+
 % THRESHOLD
 normal = rgb2normalizedrgb(im);
 red_layer = normal(:,:,1);
 mask1 = red_layer > 175;
 hsv = rgb2hsv(im);
 hue_layer = hsv(:,:,1);
-mask = (hue_layer > 0 & hue_layer < .11) | mask1;
+mask = ((hue_layer > .05) & (hue_layer < .11)) | mask1;
 
 figure(1)
 imshow(mask);
